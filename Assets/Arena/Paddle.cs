@@ -6,10 +6,11 @@ using UnityEngine.SocialPlatforms.Impl;
 
 public class Paddle : MonoBehaviour
 {
-    static readonly int timeOfLastHitId = Shader.PropertyToID("_TimeOfLastHit"), 
+    static readonly int timeOfLastHitId = Shader.PropertyToID("_TimeOfLastHit"),
+        faceColorId = Shader.PropertyToID("_FaceColor"),
         emissionColorId = Shader.PropertyToID("_EmissionColor");
 
-    Material goalMaterial, paddleMaterial;
+    Material goalMaterial, paddleMaterial, scoreMaterial;
 
     [SerializeField, Min(0f)]
     float
@@ -39,6 +40,7 @@ public class Paddle : MonoBehaviour
         goalMaterial = goalRenderer.material;
         goalMaterial.SetColor(emissionColorId, goalColor);
         paddleMaterial = GetComponent<MeshRenderer>().material;
+        scoreMaterial = scoreText.fontMaterial;
         SetScore(0);
     }
 
@@ -106,9 +108,7 @@ public class Paddle : MonoBehaviour
         bool success = -1f <= hitFactor && hitFactor <= 1f;
         if (success)
         {
-            Debug.Log("Time : " + Time.time);
             paddleMaterial.SetFloat(timeOfLastHitId, Time.time);
-            Debug.Log("Time of Last Hit : " + timeOfLastHitId);
         }
         return success;
     }
@@ -117,6 +117,7 @@ public class Paddle : MonoBehaviour
     {
         score = newScore;
         scoreText.SetText("{0}", newScore);
+        scoreMaterial.SetColor(faceColorId, goalColor * (newScore / pointsToWin));
         SetExtents(Mathf.Lerp(maxExtents, minExtents, newScore / (pointsToWin - 1f)));
     }
 
