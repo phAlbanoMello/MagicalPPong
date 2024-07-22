@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 
@@ -5,15 +6,14 @@ public class Game : MonoBehaviour
 {
     [SerializeField]
     LivelyCamera livelyCamera;
+    [SerializeField]
+    bool CameraEffects;
 
     [SerializeField]
     Ball ball;
 
     [SerializeField]
     Paddle southPaddle, northPaddle;
-    
-    [SerializeField, Min(0f)]
-    Vector2 arenaExtents = new Vector2(10f, 10f);
 
     [SerializeField, Min(2)]
     int pointsToWin = 3;
@@ -24,9 +24,31 @@ public class Game : MonoBehaviour
     [SerializeField]
     TextMeshProUGUI countdownText;
 
-    float countdownUntilNewGame;
+    private float countdownUntilNewGame;
+    private Vector2 arenaExtents;
 
-    void Awake() => countdownUntilNewGame = newGameDelay;
+    public bool RunUpdate { get; private set; }
+
+    internal void Init(Extents extents)
+    {
+        arenaExtents = new Vector2(extents._width, extents._lenght);
+
+        northPaddle.Setup(arenaExtents.y/2);
+        southPaddle.Setup(-arenaExtents.y/2);
+
+        StartCountdown();
+        TogglePlayGame(true); //Starts game loop by SystemManager;
+    }
+
+    public void TogglePlayGame(bool play)
+    {
+        RunUpdate = play; 
+    }
+
+    void StartCountdown()
+    {
+        countdownUntilNewGame = newGameDelay;
+    }
 
     void StartNewGame()
     {
@@ -35,22 +57,21 @@ public class Game : MonoBehaviour
         northPaddle.StartNewGame();
     }
 
-    void Update()
+    public void UpdateGame(float deltaTime)
     {
-        southPaddle.Move(ball.Position.x, arenaExtents.x);
-        northPaddle.Move(ball.Position.x, arenaExtents.x);
-        
-        if (countdownUntilNewGame <= 0f)
-        {
-            UpdateGame();
-        }
-        else
+        if (countdownUntilNewGame > 0f)
         {
             UpdateCountdown();
+            return;
         }
+
+        southPaddle.Move(ball.Position.x, arenaExtents.x/2);
+        northPaddle.Move(ball.Position.x, arenaExtents.x / 2);
+
+        UpdateBall();
     }
 
-    void UpdateGame()
+    void UpdateBall()
     {
         ball.Move();
         BounceYIfNeeded();
@@ -78,7 +99,7 @@ public class Game : MonoBehaviour
 
     void BounceYIfNeeded()
     {
-        float yExtents = arenaExtents.y - ball.Extents;
+        float yExtents = arenaExtents.y / 2 - ball.Extents;
         if (ball.Position.y < -yExtents)
         {
             BounceY(-yExtents, southPaddle, northPaddle);
@@ -96,8 +117,9 @@ public class Game : MonoBehaviour
 
         BounceXIfNeeded(bounceX);
         bounceX = ball.Position.x - ball.Velocity.x * durationAfterBounce;
-        
-        livelyCamera.PushXZ(ball.Velocity);
+
+        if(CameraEffects)livelyCamera.PushXZ(ball.Velocity);
+
         ball.BounceY(boundary);
         if (defender.HitBall(bounceX, ball.Extents, out float hitFactor))
         {
@@ -105,7 +127,7 @@ public class Game : MonoBehaviour
         }
         else
         {
-            livelyCamera.JostleY();
+            if (CameraEffects) livelyCamera.JostleY();
             if (attacker.ScorePoint(pointsToWin))
             {
                 EndGame();
@@ -115,24 +137,25 @@ public class Game : MonoBehaviour
 
     void BounceXIfNeeded(float x)
     {
-        float xExtents = arenaExtents.x - ball.Extents;
-        if (x < -xExtents)
+        float xExtents = arenaExtents.x/2 - ball.Extents;
+        if (x < -xExtents) //Is hitting the left side of the arena
         {
-            livelyCamera.PushXZ(ball.Velocity);
+            if (CameraEffects) livelyCamera.PushXZ(ball.Velocity);
             ball.BounceX(-xExtents);
         }
-        else if (x > xExtents)
+        else if (x > xExtents)//Is hitting the right side of the arena
         {
-            livelyCamera.PushXZ(ball.Velocity);
+            if (CameraEffects) livelyCamera.PushXZ(ball.Velocity);
             ball.BounceX(xExtents);
         }
     }
 
     void EndGame()
     {
-        countdownUntilNewGame = newGameDelay;
+        StartCountdown();
         countdownText.SetText("GAME OVER");
         countdownText.gameObject.SetActive(true);
         ball.EndGame();
     }
+
 }

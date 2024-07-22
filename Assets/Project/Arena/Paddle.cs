@@ -35,13 +35,19 @@ public class Paddle : MonoBehaviour
 
     float extents, targetingBias;
 
-    void Awake()
+    public void Setup(float zPos)
     {
         goalMaterial = goalRenderer.material;
         goalMaterial.SetColor(emissionColorId, goalColor);
         paddleMaterial = GetComponent<MeshRenderer>().material;
         scoreMaterial = scoreText.fontMaterial;
         SetScore(0);
+
+
+        transform.position = new Vector3(
+            transform.position.x,
+            transform.position.y,
+            zPos);
     }
 
     public void StartNewGame()
@@ -53,9 +59,9 @@ public class Paddle : MonoBehaviour
     void SetExtents(float newExtents)
     {
         extents = newExtents;
-        Vector3 s = transform.localScale;
-        s.x = 2f * newExtents;
-        transform.localScale = s;
+        Vector3 scale = transform.localScale;
+        scale.x = 2f * newExtents;
+        transform.localScale = scale;
     }
 
     void ChangeTargetingBias() =>
@@ -70,11 +76,11 @@ public class Paddle : MonoBehaviour
 
     public void Move(float target, float arenaExtents)
     {
-        Vector3 p = transform.localPosition;
-        p.x = isAI ? AdjustByAI(p.x, target) : AdjustByPlayer(p.x);
+        Vector3 position = transform.localPosition;
+        position.x = isAI ? AdjustByAI(position.x, target) : AdjustByPlayer(position.x);
         float limit = arenaExtents - extents;
-        p.x = Mathf.Clamp(p.x, -limit, limit);
-        transform.localPosition = p;
+        position.x = Mathf.Clamp(position.x, -limit, limit);
+        transform.localPosition = position;
     }
     float AdjustByAI(float x, float target)
     {
