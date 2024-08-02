@@ -1,8 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using UnityEngine.SocialPlatforms.Impl;
+using UnityEngine.InputSystem.Interactions;
 
 public class Paddle : MonoBehaviour
 {
@@ -10,7 +8,7 @@ public class Paddle : MonoBehaviour
         faceColorId = Shader.PropertyToID("_FaceColor"),
         emissionColorId = Shader.PropertyToID("_EmissionColor");
 
-    Material goalMaterial, paddleMaterial, scoreMaterial;
+    Material goalMaterial, paddleMaterial;
 
     [SerializeField, Min(0f)]
     float
@@ -23,37 +21,91 @@ public class Paddle : MonoBehaviour
     bool isAI;
 
     [SerializeField]
-    TextMeshProUGUI scoreText;
+    MeshRenderer goalRenderer;
+    [SerializeField]
+    ParticleSystem goalBreakFX;
 
     [SerializeField]
-    MeshRenderer goalRenderer;
+    ParticleSystem[] souls;
 
     [SerializeField, ColorUsage(true, true)]
     Color goalColor = Color.white;
 
-    int score;
-
     float extents, targetingBias;
+    private bool goLeft = false, goRight = false;
 
-    public void Setup(float zPos)
+    private InputActionsBase baseActions;
+
+    private Material goalBreakFXMat;
+    private int initialSouls;
+    private float currentZPos;
+
+    [SerializeField]
+    int breakParticleEmittionRate = 10;
+   
+    public int SoulCount { get; private set; }
+    public bool IsAI { get => isAI; private set {}}
+
+    public void Setup(float zPos, string name, int initialSoulCount)
     {
+        baseActions = new InputActionsBase();
+
+        baseActions.Player.MoveRight.started += ctx => { goRight = true; };
+        baseActions.Player.MoveRight.canceled += ctx => { goRight = false; };
+        baseActions.Player.MoveLeft.started += ctx => { goLeft = true; };
+        baseActions.Player.MoveLeft.canceled += ctx => { goLeft = false; };
+
+        baseActions.Enable();
+
         goalMaterial = goalRenderer.material;
         goalMaterial.SetColor(emissionColorId, goalColor);
         paddleMaterial = GetComponent<MeshRenderer>().material;
-        scoreMaterial = scoreText.fontMaterial;
-        SetScore(0);
 
+        initialSouls = initialSoulCount;
+        SetSouls(initialSouls);
 
+        var renderer = goalBreakFX.GetComponent<ParticleSystemRenderer>();
+        goalBreakFXMat = renderer.material;
+        goalBreakFXMat.SetColor(emissionColorId, goalColor);
+
+        SetPosition(zPos);
+        SetExtents(maxExtents);
+    }
+
+    private void SetPosition(float zPos)
+    {
+        currentZPos = zPos;
+        
         transform.position = new Vector3(
-            transform.position.x,
-            transform.position.y,
-            zPos);
+                    transform.position.x,
+                    transform.position.y,
+                    currentZPos);
+    }
+
+    public void UpdateSoulsFX()
+    {
+        for (int i = 0; i < souls.Length; i++)
+        {
+            if (i < SoulCount)
+            {
+                souls[i].Play();
+            }
+            else
+            {
+                souls[i].Stop();
+            }
+        }
     }
 
     public void StartNewGame()
     {
-           SetScore(0);
+           SetSouls(initialSouls);
            ChangeTargetingBias();
+           UpdateSoulsFX();
+           transform.position = new Vector3(
+           0,
+           transform.position.y,
+           currentZPos);
     }
 
     void SetExtents(float newExtents)
@@ -67,14 +119,21 @@ public class Paddle : MonoBehaviour
     void ChangeTargetingBias() =>
         targetingBias = Random.Range(-maxTargetingBias, maxTargetingBias);
 
-    public bool ScorePoint(int pointsToWin)
+    public void TakeDamage()
     {
         goalMaterial.SetFloat(timeOfLastHitId, Time.time);
-        SetScore(score + 1, pointsToWin);
-        return score >= pointsToWin;
+        SetSouls(SoulCount - 1);
+        goalBreakFX.Emit(breakParticleEmittionRate);
+        goalBreakFXMat.SetFloat(timeOfLastHitId, Time.time);
+        UpdateSoulsFX();
     }
 
-    public void Move(float target, float arenaExtents)
+    public bool IsDead()
+    {
+        return SoulCount <= 0;
+    }
+
+    public void Movement(float target, float arenaExtents)
     {
         Vector3 position = transform.localPosition;
         position.x = isAI ? AdjustByAI(position.x, target) : AdjustByPlayer(position.x);
@@ -93,8 +152,6 @@ public class Paddle : MonoBehaviour
     }
     float AdjustByPlayer(float x)
     {
-        bool goRight = Input.GetKey(KeyCode.RightArrow);
-        bool goLeft = Input.GetKey(KeyCode.LeftArrow);
         if (goRight && !goLeft)
         {
             return x + speed * Time.deltaTime;
@@ -106,7 +163,7 @@ public class Paddle : MonoBehaviour
         return x;
     }
 
-    public bool HitBall(float ballX, float ballExtents, out float hitFactor)
+    public bool HitBallCheck(float ballX, float ballExtents, out float hitFactor)
     {
         hitFactor =
             (ballX - transform.localPosition.x) /
@@ -119,12 +176,13 @@ public class Paddle : MonoBehaviour
         return success;
     }
 
-    void SetScore(int newScore, float pointsToWin = 1000f)
+    void SetSouls(int newSoulCount)
     {
-        score = newScore;
-        scoreText.SetText("{0}", newScore);
-        scoreMaterial.SetColor(faceColorId, goalColor * (newScore / pointsToWin));
-        SetExtents(Mathf.Lerp(maxExtents, minExtents, newScore / (pointsToWin - 1f)));
-    }
+        SoulCount = newSoulCount;
 
+        if (newSoulCount <= 0)return;
+
+        float t = 1f / newSoulCount;
+        SetExtents(Mathf.Lerp(maxExtents, minExtents, t));
+    }
 }

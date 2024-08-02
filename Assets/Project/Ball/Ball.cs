@@ -23,8 +23,6 @@ public class Ball : MonoBehaviour
     int bounceParticleEmission = 20,
         startParticleEmission = 100;
 
-    void Awake() => gameObject.SetActive(false);
-
     public void UpdateVisualization() => trailParticleSystem.transform.localPosition =
         transform.localPosition = new Vector3(position.x, 0f, position.y);
 

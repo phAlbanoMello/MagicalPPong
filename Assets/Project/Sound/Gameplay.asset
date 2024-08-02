@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4250c34cc2ed98c42a45862478748c25, type: 3}
+  m_Name: Gameplay
+  m_EditorClassIdentifier: 
+  soundEntries:
+  - key: Bounce
+    sound: {fileID: 8300000, guid: d7da440ad4f6c4e7489efd85844988d8, type: 3}
+  - key: Damage
+    sound: {fileID: 8300000, guid: e5f93a5297603479283f5159748502b0, type: 3}
+  - key: Hit
+    sound: {fileID: 8300000, guid: d14d9281a9cf64901b5ed891b5eb7069, type: 3}
+  - key: GameOver
+    sound: {fileID: 8300000, guid: aa56a9a240f7f4261b6b3c11198a0b1a, type: 3}
