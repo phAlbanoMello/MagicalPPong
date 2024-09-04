@@ -2,19 +2,27 @@ using UnityEngine;
 
 public class CameraManager : MonoBehaviour
 {
-    const float CAMERA_ANGLE = 45f;
-
-    public Camera MainCamera { get; private set; }
+    [SerializeField]
+    private Camera GameCamera;
 
     public void Setup(Extents arenaExtents)
     {
-        MainCamera = GetComponent<Camera>();
-        AdjustCamera(MainCamera, arenaExtents);
+        AdjustCamera(GameCamera, arenaExtents);
+        SetupCameraEffectsAnchor();
     }
 
     private void AdjustCamera(Camera mainCamera, Extents arenaExtents)
     {
-        MainCamera.transform.position = new Vector3(0, arenaExtents._lenght, -arenaExtents._lenght);
+        GameCamera.transform.position = new Vector3(0, arenaExtents._length, -arenaExtents._length);
+    }
+
+    private void SetupCameraEffectsAnchor()
+    {
+        CameraMotionEffects camFx = GameCamera.GetComponent<CameraMotionEffects>();
+
+        if (camFx == null)return;
+     
+        camFx.Setup();
     }
 
 }

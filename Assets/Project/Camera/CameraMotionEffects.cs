@@ -9,10 +9,14 @@ public class CameraMotionEffects : MonoBehaviour
         jostleStrength = 40f,
         pushStrength = 1f,
         maxDeltaTime = 1f / 60f;
-    
+
     Vector3 anchorPosition, velocity;
 
-    void Awake() => anchorPosition = transform.localPosition;
+    bool effectsEnabled = true;
+
+    public void Setup() {
+        anchorPosition = transform.localPosition;
+    }
 
     public void JostleY() => velocity.y += jostleStrength;
 
@@ -21,17 +25,22 @@ public class CameraMotionEffects : MonoBehaviour
         velocity.x += pushStrength * impulse.x;
         velocity.z += pushStrength * impulse.y;
     }
-
+    public void ToggleEnabled(bool value)
+    {
+        effectsEnabled = value;
+    }
     void LateUpdate()
     {
-        float deltaTime = Time.deltaTime;
-        while (deltaTime > maxDeltaTime)
+        if (effectsEnabled)
         {
-            TimeStep(maxDeltaTime);
-            deltaTime -= maxDeltaTime;
+            float deltaTime = Time.deltaTime;
+            while (deltaTime > maxDeltaTime)
+            {
+                TimeStep(maxDeltaTime);
+                deltaTime -= maxDeltaTime;
+            }
+            TimeStep(deltaTime);
         }
-        TimeStep(deltaTime); //Adjusts spring motion velocity proportional
-                             //to the time spent between frames.
     }
 
     void TimeStep(float deltaTime)

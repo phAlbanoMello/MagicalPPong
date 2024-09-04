@@ -6,6 +6,7 @@ public class SoundEntry
 {
     public string key;
     public AudioClip sound;
+    public float volume;
 }
 
 [CreateAssetMenu(fileName = "NewSoundLibrary", menuName = "Sound Library", order = 51)]

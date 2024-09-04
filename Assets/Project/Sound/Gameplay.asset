@@ -15,9 +15,13 @@ MonoBehaviour:
   soundEntries:
   - key: Bounce
     sound: {fileID: 8300000, guid: d7da440ad4f6c4e7489efd85844988d8, type: 3}
+    volume: 0.5
   - key: Damage
     sound: {fileID: 8300000, guid: e5f93a5297603479283f5159748502b0, type: 3}
+    volume: 0.5
   - key: Hit
     sound: {fileID: 8300000, guid: d14d9281a9cf64901b5ed891b5eb7069, type: 3}
+    volume: 0.5
   - key: GameOver
     sound: {fileID: 8300000, guid: aa56a9a240f7f4261b6b3c11198a0b1a, type: 3}
+    volume: 0.5

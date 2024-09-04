@@ -4,7 +4,7 @@ using UnityEngine;
 public class Game : MonoBehaviour
 {
     [SerializeField]
-    bool CameraEffects;
+    bool cameraEffects;
 
     [SerializeField]
     Ball ball;
@@ -23,28 +23,43 @@ public class Game : MonoBehaviour
 
     private CameraMotionEffects CamMotionFX;
     private SoundManager soundManager;
+    private InputActionsBase baseActions;
+
 
     private Vector2 arenaExtents;
     private float countdownUntilNewGame;
 
-    int previousRecord;
-    int winCount;
+    private readonly string WIN_MESSAGE = "ENEMY DEFEATED";
+    private readonly string LOSE_MESSAGE = "YOU DIED";
+    private readonly string AI_NAME = "AI";
+    private readonly string PLAYER_NAME = "Player";
 
     public bool RunUpdate { get; private set; }
+    public bool CameraEffects { get => cameraEffects; private set { } }
 
-
-    internal void Init(Extents extents, SoundManager soundManager)
+    public void Init(Extents extents, SoundManager soundManager)
     {
         this.soundManager = soundManager;
         ball.gameObject.SetActive(false);
         CamMotionFX = Camera.main.GetComponent<CameraMotionEffects>();
-        arenaExtents = new Vector2(extents._width, extents._lenght);
+        UpdateArenaExtents(extents);
 
-        northPaddle.Setup(arenaExtents.y/2, "AI", initialSouls);
-        southPaddle.Setup(-arenaExtents.y/2, "Player", initialSouls);
+        northPaddle.Setup(arenaExtents.y/2, AI_NAME, initialSouls);
+        southPaddle.Setup(-arenaExtents.y/2, PLAYER_NAME, initialSouls);
 
-        StartCountdown();
-        TogglePlayGame(true);    
+        StartCountdown();   
+    }
+
+    public void UpdateArenaExtents(Extents extents)
+    {
+        arenaExtents = new Vector2(extents._width, extents._length);
+        northPaddle.Setup(arenaExtents.y / 2, AI_NAME, initialSouls);
+        southPaddle.Setup(-arenaExtents.y / 2, PLAYER_NAME, initialSouls);
+    }
+
+    public void UpdateDifficulty()
+    {
+        northPaddle.UpdateSpeed(GameSettings.Instance.Difficulty);
     }
 
     public void TogglePlayGame(bool play)
@@ -76,6 +91,12 @@ public class Game : MonoBehaviour
         northPaddle.Movement(ball.Position.x, arenaExtents.x/2);
 
         UpdateBall();
+    }
+
+    public void ResetGame()
+    { 
+        StartNewGame();
+        ball.gameObject.SetActive(false);
     }
 
     void UpdateBall()
@@ -125,7 +146,7 @@ public class Game : MonoBehaviour
         BounceXIfNeeded(bounceX);
         bounceX = ball.Position.x - ball.Velocity.x * durationAfterBounce;
 
-        if(CameraEffects)CamMotionFX.PushXZ(ball.Velocity);
+        if(cameraEffects)CamMotionFX.PushXZ(ball.Velocity);
 
         ball.BounceY(boundary);
   
@@ -136,7 +157,7 @@ public class Game : MonoBehaviour
         }
         else
         {
-            if (CameraEffects) CamMotionFX.JostleY();
+            if (cameraEffects) CamMotionFX.JostleY();
             attacker.TakeDamage();
             soundManager.PlaySound("Damage");
             if (attacker.IsDead())
@@ -154,13 +175,13 @@ public class Game : MonoBehaviour
         float xExtents = arenaExtents.x/2 - ball.Extents;
         if (x < -xExtents) //Is hitting the left side of the arena
         {
-            if (CameraEffects) CamMotionFX.PushXZ(ball.Velocity);
+            if (cameraEffects) CamMotionFX.PushXZ(ball.Velocity);
             ball.BounceX(-xExtents);
             soundManager.PlaySound("Bounce");
         }
         else if (x > xExtents)//Is hitting the right side of the arena
         {
-            if (CameraEffects) CamMotionFX.PushXZ(ball.Velocity);
+            if (cameraEffects) CamMotionFX.PushXZ(ball.Velocity);
             ball.BounceX(xExtents);
             soundManager.PlaySound("Bounce");
         }
@@ -171,7 +192,7 @@ public class Game : MonoBehaviour
         soundManager.PlaySound("GameOver");
         StartCountdown();
         
-        string gameOverText = winner.IsAI ? "YOU DIED" : "ENEMY DEFEATED";
+        string gameOverText = winner.IsAI ? LOSE_MESSAGE : WIN_MESSAGE;
         Color gameOverColor = winner.IsAI ? Color.red : Color.blue;
 
         countdownText.fontMaterial.SetColor("_EmissionColor", gameOverColor);

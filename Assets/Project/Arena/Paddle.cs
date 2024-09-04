@@ -1,6 +1,4 @@
-using TMPro;
 using UnityEngine;
-using UnityEngine.InputSystem.Interactions;
 
 public class Paddle : MonoBehaviour
 {
@@ -70,6 +68,11 @@ public class Paddle : MonoBehaviour
 
         SetPosition(zPos);
         SetExtents(maxExtents);
+    }
+
+    public void UpdateSpeed(float value)
+    {
+        speed += value;
     }
 
     private void SetPosition(float zPos)
